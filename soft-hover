@@ -1,0 +1,65 @@
+
+(function(){
+  // Load GSAP if needed
+  function loadGSAP(cb){
+    if (window.gsap) return cb();
+    var s=document.createElement('script');
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js";
+    s.onload=cb; document.head.appendChild(s);
+  }
+
+  function onReady(fn){
+    if (document.readyState!=="loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+
+  onReady(function(){
+    loadGSAP(function(){
+      var selector = '[aria-label="menu-btn"], [data-acc-text="menu-btn"], .menu-btn';
+      var nodes = document.querySelectorAll(selector);
+
+      nodes.forEach(function(el){
+        // prevent duplicate listeners when Storyline re-renders
+        if (el.dataset.hoverInit === "1") return;
+        el.dataset.hoverInit = "1";
+
+        // If target is an SVG (or inside one), animate its wrapper instead
+        var isSVG = el instanceof SVGElement || !!el.closest('svg');
+        var target = isSVG ? (el.closest('.slide-object, .sl-block, .block, div') || el.parentElement || el)
+                           : el;
+
+        // Make SVG transforms behave sanely if we ever animate the SVG
+        if (isSVG) {
+          gsap.set(el, { transformBox: "fill-box", transformOrigin: "50% 50%" });
+        }
+
+        // Keep transforms light
+        target.style.willChange = "transform";
+        gsap.set(target, { transformOrigin: "50% 50%", force3D: false });
+
+        // Respect reduced motion
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Very subtle lift: use percentages so scaling/zoom doesn’t explode the move
+        var tl = gsap.timeline({
+          paused: true,
+          defaults: { duration: reduce ? 0 : 0.16, ease: "power2.out" }
+        });
+
+        // yPercent is tiny and consistent; scale is barely noticeable
+        tl.to(target, { yPercent: -1.2, scale: 1.004 }, 0);
+
+        function enter(){ tl.play(); }
+        function leave(){ tl.reverse(); }
+
+        el.addEventListener("mouseenter", enter);
+        el.addEventListener("mouseleave", leave);
+        el.addEventListener("focus", enter, true);
+        el.addEventListener("blur", leave, true);
+
+        // Reset if Storyline reloads a slide/layer
+        window.addEventListener("storylineplayerreset", function(){ tl.progress(0).pause(); });
+      });
+    });
+  });
+})();
