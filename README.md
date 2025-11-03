@@ -5,6 +5,6 @@ Storyline code snippets for use in eLearning development.
 
 | Branch | Description |
 |--------|--------------|
-| [hovers]([https://github.com/YourUsername/storyline-js-snippets/tree/dev](https://github.com/BronsonVibes/LD_Storyline_Snippets/tree/hover-animations)) | Button and menu hover states |
+| [hovers](https://github.com/BronsonVibes/LD_Storyline_Snippets/tree/hover-animations) | Button and menu hover states |
 | [animations](x) | Hover, fade, GSAP effects |
 | [progress-bars](x) | Vertical and slide-based progress bars |
