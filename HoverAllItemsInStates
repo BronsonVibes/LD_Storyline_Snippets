@@ -1,0 +1,71 @@
+/* Storyline: make the entire button (including all state assets) hover together */
+(function () {
+  // Load GSAP if needed
+  function loadGSAP(cb) {
+    if (window.gsap) return cb();
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js";
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+
+  function onReady(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+
+  // Find the highest wrapper that still represents a single Storyline object/group
+  function getWholeButtonWrapper(el) {
+    var so = el.closest(".slide-object") || el.closest(".sl-block");
+    // If the clickable thing is a group, the true wrapper is often the parent of .slide-object
+    if (so && so.parentElement) return so.parentElement;
+    return so || el;
+  }
+
+  onReady(function () {
+    loadGSAP(function () {
+      // CHANGE THIS to match your button (aria-label or data-acc-text)
+      var selector = '[aria-label="menu-btn"], [data-acc-text="menu-btn"], .menu-btn';
+
+      // Find all hits, but animate ONE wrapper per button
+      var hits = document.querySelectorAll(selector);
+      var wrappers = new Set();
+
+      hits.forEach(function (hit) {
+        wrappers.add(getWholeButtonWrapper(hit));
+      });
+
+      wrappers.forEach(function (wrapper) {
+        if (!wrapper || wrapper.dataset.softHoverInit === "1") return;
+        wrapper.dataset.softHoverInit = "1";
+
+        wrapper.style.willChange = "transform";
+        gsap.set(wrapper, { transformOrigin: "50% 50%", force3D: false });
+
+        var reduce =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        var tl = gsap.timeline({
+          paused: true,
+          defaults: { duration: reduce ? 0 : 0.16, ease: "power2.out" },
+        });
+
+        // Soft lift + tiny scale (applies to ALL assets in every state because we animate the wrapper)
+        tl.to(wrapper, { yPercent: -1.2, scale: 1.004 }, 0);
+
+        function enter() { tl.play(); }
+        function leave() { tl.reverse(); }
+
+        wrapper.addEventListener("pointerenter", enter);
+        wrapper.addEventListener("pointerleave", leave);
+        wrapper.addEventListener("focusin", enter);
+        wrapper.addEventListener("focusout", leave);
+
+        window.addEventListener("storylineplayerreset", function () {
+          tl.progress(0).pause();
+        });
+      });
+    });
+  });
+})();
